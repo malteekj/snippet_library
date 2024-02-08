@@ -37,6 +37,25 @@ def sitkDicomReader(dcm_path, threshold=None, flip=None, return_array = False):
     else:
         return image
 
+def sitkDicom2Nifti(dcm_path, out_path, threshold=None, flip=None):
+    reader = sitk.ImageSeriesReader()
+    dicom_names = reader.GetGDCMSeriesFileNames(dcm_path)
+    reader.SetFileNames(dicom_names)
+    image = reader.Execute()
+
+    # Added a call to PermuteAxes to change the axes of the data
+    # image = sitk.PermuteAxes(image, [2, 1, 0])
+    
+    if threshold is not None:
+        image = sitk.BinaryThreshold(image,lowerThreshold=threshold[0], upperThreshold=threshold[1])
+    
+    if flip is not None:
+        image = sitk.Flip(image, flip)
+    
+    sitk.WriteImage(image, out_path)
+    
+    return image
+
 def readAndResample(CT_path, PET_path):
     '''
     Function that read and resample pet 
