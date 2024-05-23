@@ -14,7 +14,8 @@ import time
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 import SimpleITK as sitk
 
-def sitkDicomReader(dcm_path, threshold=None, flip=None, return_array = False):
+def sitkDicomReader(dcm_path, threshold=None, flip=None, return_array = False, 
+                    to_canonical: bool = True, nifti_axes_convention: bool = True):
     '''
     Wrapper function that makes dicom reading simple with SimpleITK
     '''
@@ -23,14 +24,18 @@ def sitkDicomReader(dcm_path, threshold=None, flip=None, return_array = False):
     reader.SetFileNames(dicom_names)
     image = reader.Execute()
 
-    # Added a call to PermuteAxes to change the axes of the data
-    # image = sitk.PermuteAxes(image, [2, 1, 0])
     
     if threshold is not None:
         image = sitk.BinaryThreshold(image,lowerThreshold=threshold[0], upperThreshold=threshold[1])
     
     if flip is not None:
         image = sitk.Flip(image, flip)
+    
+    if to_canonical: 
+        image = sitk.DICOMOrient(image, desiredCoordinateOrientation='RAS')
+    
+    if nifti_axes_convention:
+        image = sitk.PermuteAxes(image, order=[2,1,0])
     
     if return_array:
         return sitk.GetArrayFromImage(image)
